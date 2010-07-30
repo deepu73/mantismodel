@@ -1,0 +1,38 @@
+# Calibration phase configuration file
+
+# Paths
+TRACEFILE_DIR=/temp/diska/gamut/traces
+SCRIPT_DIR=/temp/diska/gamut/scripts3
+DATA_DIR=/temp/diska/gamut/data
+
+DAQ_HOSTNAME=rivoire-laptop2
+DAQ_USER=skrufi
+DAQ_DATA_DIR=/home/skrufi/zesti/data
+
+TRACE_ID=calib-2008-03-03
+
+# Location of calibration programs for each component
+CALIB_CPU_PROG=/temp/diska/gamut/gamut-cpu-smr/run-matmult.sh
+CALIB_MEM_PROG=/temp/diska/gamut/gamut-0.7.0/gamut
+CALIB_DISK_PROG=/temp/diska/gamut/gamut-0.7.0/gamut
+
+# CPU frequency scaling information
+CPU_FREQS_AVAIL=2324000 1992000 1660000 1328000 996000
+CPU_SCALING_AVAIL=y
+# CPU_FREQS_AVAIL=2324000 1992000
+
+# Tracefile options
+#   Maximum of amount of memory to beat up on (in MB)
+CALIB_MEM_MAX_SIZE=400
+#   Working files for disk experiments
+CALIB_DISK_WORKFILES=/temp/diska/gamut/foo.txt
+#   Number of CPUs to exercise
+CALIB_NUM_CPUS=2
+
+# Metrics options
+# Use "$1" for trace id, $2 for amount of time, $SCRIPT_DIR and $DATA_DIR
+METRICS_LABELS="Starting CPU freq poll","Starting iostat","Starting performance counters","Starting CPU utilization poll"
+# METRICS_CMDS="$SCRIPT_DIR/cpufreq_poll.sh $DATA_DIR/$1 $2 &","iostat -xnt 1 $2 > $DATA_DIR/$1.iostat &","pfmon -k -u --events=bus_trans_mem:all_agents,instructions_retired,unhalted_core_cycles --system-wide --print-interval=1000 -t$2 --outfile=$DATA_DIR/$1 --with-header &","sar -P ALL 1 $2 > $DATA_DIR/$1.cpu_ut"
+METRICS_CMDS="$SCRIPT_DIR/cpufreq_poll.sh $DATA_DIR/$1 $2 &","iostat -xnt 1 $2 > $DATA_DIR/$1.iostat &","pfmon -k -u --events=rs_uops_dispatched,uops_retired:any,instructions_retired,unhalted_core_cycles --system-wide --print-interval=1000 -t$2 --outfile=$DATA_DIR/$1 --with-header &","sar -P ALL 1 $2 > $DATA_DIR/$1.cpu_ut"
+DAQ_PWR_PROG=/home/skrufi/brandelectronics/brandelect
+DAQ_PWR_KILL="killall brandelect"

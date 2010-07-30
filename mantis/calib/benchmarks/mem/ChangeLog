@@ -1,0 +1,1827 @@
+CHANGELOG
+
+=============================================================================
+
+VERSION 0.7.0
+
+2005-10-17 22:33
+
+    * README
+
+    Updated README for new project name.
+
+
+2005-10-17 22:17
+
+    * version.h
+
+    Bumped up version number.
+
+
+2005-10-17 22:15
+
+    * TODO
+
+    Pushed back deadlines in TODO.
+
+
+2005-10-17 22:14
+
+    * calibrate.c cpuworker.c diskworker.c gamut.c input.c linkctl.c linklib.c
+      mainctl.c memworker.c netgamut.c networker.c opts.c reaper.c utillog.c
+      utillog.h workerctl.c workerinfo.c workerlib.c workeropts.c workeropts.h
+      workersync.c workerwait.c
+
+    Updated logging constants to reflect new project name.
+
+
+=============================================================================
+
+VERSION 0.6.2
+
+2005-10-17 22:05
+
+    * version.h
+
+    Bumped up version number.
+
+
+2005-10-17 21:58
+
+    * INSTALL Makefile README TODO calibrate.h constants.h cpuburn.h
+      cpuworker.c cpuworker.h diskworker.c diskworker.h input.c input.h
+      linkctl.c linkctl.h linklib.c linklib.h mainctl.c mainctl.h memworker.c
+      memworker.h networker.c networker.h opts.c opts.h reaper.c reaper.h
+      version.h workerctl.c workerctl.h workerinfo.c workerinfo.h workerlib.c
+      workerlib.h workeropts.c workeropts.h workersync.c workersync.h
+      workerwait.c workerwait.h
+
+    Renamed the project to 'gamut'.
+
+
+2005-10-17 21:57
+
+    * gamut.c netgamut.c
+
+    Renamed the project to 'gamut'.
+
+
+2005-10-16 18:28
+
+    * cpuburn.c cpuburn.h workeropts.c workeropts.h
+
+    Updated CPU burning modularity.
+
+
+2005-10-16 18:19
+
+    * TODO
+
+    More detailed TODO.
+
+
+2005-09-06 11:48
+
+    * TODO
+
+    Updated TODO list.
+
+
+2005-09-05 17:23
+
+    * version.h
+
+    Bumped up version number.
+
+
+=============================================================================
+
+VERSION 0.6.1
+
+2005-09-05 17:22
+
+    * cpuworker.c diskworker.c mainctl.c memworker.c networker.c reaper.c
+      workerctl.c workeropts.c workersync.c workerwait.c
+
+    Removed references to threads and replaced them with references to workers.
+
+
+2005-09-05 17:15
+
+    * constants.h cpuworker.c diskworker.c memworker.c networker.c utilio.c
+      workerinfo.c workerlib.c workerlib.h workeropts.c workeropts.h
+
+    General Changes
+    ===============
+    Increased the maximum number of workers in a link.
+    Allows multiple worker dependencies (i.e., 'after' parameters).
+    Removed references to threads; replaced with references to workers.
+    Changed find_worker_by_after to provide a starting search position.
+    Only start 'after' workers once all dependencies are met.
+    
+    All Workers
+    ===========
+    Keep track of number of usecs by which we missed deadlines.
+    Print the average time by which we missed the deadlines at worker exit.
+    Print the total time by which we missed the deadlines in 'info'.
+    
+    Memory Worker
+    =============
+    Cleaned up printing of statistics at the end.
+    
+    Utility Code
+    ============
+    Fixed boundary condition for printing out next greatest prefix.
+
+
+=============================================================================
+
+VERSION 0.6.0
+
+2005-09-01 00:28
+
+    * Makefile README calibrate.h constants.h cpuworker.c cpuworker.h
+      diskworker.c diskworker.h mainctl.c mainctl.h memworker.c memworker.h
+      networker.c networker.h utilio.c utilio.h version.h workerinfo.c
+      workerlib.c workeropts.c workeropts.h workersync.c workersync.h
+
+    A relatively major overhaul that involves 'link' functionality.
+    
+    Main Control
+    ============
+    Renamed 'link add' to 'link queue' to be consistent with wctl semantics.
+    
+    Worker Options and Functions
+    ============================
+    Added new shared headers (linked, linkwait) to opts and copy/clean funcs.
+    Added a 'pause' header, but functionality is not currently implemented.
+    Added new shared headers to 'info' printout.
+    Print previous and next workers if we're in a link.
+    Lock the reaper in kill_worker so it won't die before we kill it.
+    Signal a worker in kill_worker if it's running (or linkwait'ed).
+    Synchronize the start so we know the thread ID has been filled in.
+    Use functions like find_worker_by_tid and get_shared_opts
+    - This removes redundant code in a few places, mostly switch() statements.
+    Poke 'after' workers in worker_unregister.
+    Handle locking of multiple workers correctly.
+    - Append all workers to a list, sort it, then lock in-order.
+    - We provide a new API for this functionality.
+    Clean up link state as workers exit.
+    Added global lock positioning information to the shared opts.
+    Parse options into a temporary local structure
+    - This prevents us from overwriting live workers on a failed parse.
+    Prevent duplicate option specification in a worker option parsing.
+    
+    All Workers
+    ===========
+    Added link-level functionality (i.e., epochs per link).
+    Moved total_work and deadline information above the 'restart' label.
+    Now takes a timestamp immediately after validating
+    - This will create more uniform timings
+    Knows whether to do work or wait based on our link status.
+    Keeps track of amount of time spent waiting on a link.
+    Pushed workers_exiting bookkeeping outside of main while() loop.
+    Calculates work done over two time windows
+    - The total amount of time the worker was running (total)
+    - Only the time the worker wasn't waiting on a link (work)
+    Remove ourselves from a link on exit.
+    
+    CPU Worker
+    ==========
+    Moved individual burn functions to cpuburn.[ch] from the main file.
+    
+    Memory Worker
+    =============
+    No longer use system pages or touches-per-page.
+    We use 'blocks' in much the same way as the disk worker.
+    For memory worker, keep track of the number of blocks
+    - We do this for both the total amount of RAM and the working set.
+    Created a memwork() function to encapsulate one epoch's worth of work.
+    Use print_scaled_number instead of always converting to KiB and KiBps.
+    
+    Disk Worker
+    ===========
+    Removed endofffile variable; we'll calculate it on-the-fly when necessary.
+    Created a diskwork() function to encapsulate one epoch's worth of work.
+    Added a tag to print_iostats so which know which time window we're using.
+    Use print_scaled_number instead of always converting to KiB and KiBps.
+    
+    Net Worker
+    ==========
+    Created a network() function to encapsulate one epoch's worth of work.
+    Added a tag to print_iostats so which know which time window we're using.
+    Use print_scaled_number instead of always converting to KiB and KiBps.
+    Changed error and one-off handling to be more consistent with diskworker.
+    
+    Utility Lib
+    ===========
+    Moved print_scaled_number from static in workerinfo to extern'ed in utilio.
+    
+    Constants
+    =========
+    Added more comments to the constants file.
+    Put all class-level locks ahead of worker-level locks in the global order.
+    Moved {MS,US}_SEC defitions to the constants file.
+    Defined a standard epoch length across all workers.
+    Defined a maximum number of recvfrom() calls for UDP sockets.
+
+
+2005-08-30 16:36
+
+    * cpuburn.c cpuburn.h linkctl.c linkctl.h linklib.c linklib.h
+
+    Moved code to burn CPU cycles to another file.  Added libraries and control
+    modules for linked worker functionality.
+
+
+2005-08-27 22:24
+
+    * workerctl.h
+
+    Removed useless includes.
+
+
+2005-08-27 22:23
+
+    * workersync.c workersync.h
+
+    Moved order of locking function declarations to match locking order.  Added
+    locking functions for linking.
+
+
+2005-08-27 22:22
+
+    * input.c mainctl.c mainctl.h
+
+    Moved do_link from input thread to the master thread.
+
+
+2005-08-27 22:16
+
+    * opts.c
+
+    Added missing include.
+
+2005-08-27 22:16
+
+    * workerlib.c workerlib.h
+
+    Fixed grammatical error in comment.
+
+
+2005-08-27 22:15
+
+    * diskworker.c memworker.c netsstress.c networker.c sstress.c workerctl.c
+
+    Added missing include.
+
+
+2005-08-27 22:13
+
+    * utilio.c workeropts.c workeropts.h
+
+    Added link data structures.  Modified shared opts to include worker class
+    and worker class index.  Moved get_multiplier to utilio.
+
+
+2005-08-27 22:12
+
+    * constants.h utilio.h
+
+    Added constants for link functionality and locks.  Moved {kilo, mega, giga,
+    tera} constants to utilio.h
+
+
+2005-08-27 15:50
+
+    * workeropts.h
+
+    Cut-and-paste rearrangement of data structures for better code readability.
+
+
+2005-08-27 14:57
+
+    * workeropts.c workeropts.h
+
+    Added information to shared data structure on how to implement linked
+    worker behavior.
+
+
+2005-08-25 12:30
+
+    * constants.h cpuworker.c cpuworker.h diskworker.c diskworker.h memworker.c
+      memworker.h networker.c networker.h
+
+    Defined a constant number of worker epochs per second.
+
+
+2005-08-25 11:43
+
+    * README mainctl.c mainctl.h workerctl.c workerctl.h workerlib.c
+      workerlib.h workeropts.c
+
+    Added 'queue' and 'start' sub-commands to the wctl command.
+
+
+2005-08-25 00:56
+
+    * TODO
+
+    Updated TODO.
+
+
+2005-08-25 00:04
+
+    * cpuworker.c diskworker.c memworker.c networker.c version.h workerinfo.c
+      workerlib.c workeropts.c workeropts.h
+
+    Moved total and missed deadlines to the shared option structure.
+    Added total and missed deadlines to 'info' output.
+    All workers are set to 'dirty' on parsing, and clean on passing 'restart'.
+    Added an option to control how often a disk worker syncs to disk.
+    Added an option to allow multiple memory touches per page.
+    Added functions to copy option structures.
+    The 'wctl mod' command now works (as far as I can tell).
+    Now prevents specifying the same option multiple times for a single worker.
+    Slightly more intelligent parsing function to handle flags correctly.
+    - We parse into a local structure and copy it out if it's correct.
+    Rearranged some of the static functions in workeropts to be consistent.
+
+
+=============================================================================
+
+VERSION 0.5.3
+
+2005-08-16 16:35
+
+    * README
+
+    Clarified the burn parameter for the CPU worker.
+
+
+2005-08-16 16:26
+
+    * README
+
+    Updated usage in README.
+
+
+2005-08-16 16:25
+
+    * opts.c version.h
+
+    Added version information.
+
+
+2005-08-16 16:17
+
+    * README constants.h cpuworker.c cpuworker.h diskworker.c workerinfo.c
+      workerlib.c workeropts.c workeropts.h
+
+    Clean out worker options on start-up initialization
+    Changed size of some worker options to prevent integer overflow
+    Make sure we don't try to follow ourselves (label != after)
+    Added 'tera' and 'TERA' dd-style options.
+    Simplified mega/MEGA/giga/GIGA/tera/TERA definitions.
+    
+    Re-did a lot of workerinfo so output looks better, easier to read.
+    
+    Added modular burn support to the CPU worker.
+    - Includes changes in workeropts.[ch] and cpuworker.[ch]
+    
+    Print extra diskworker debugging messages.
+    - Actually time filling of block with random data
+
+
+2005-08-15 18:43
+
+    * version.h
+
+    Added versioning information.
+
+
+2005-08-14 18:54
+
+    * TODO
+
+    Updated TODO list.
+
+
+2005-08-14 18:53
+
+    * diskworker.c memworker.c networker.c
+
+    Updated {mem,disk,net}worker to handle situation where we do no work this
+    epoch.
+
+
+2005-08-14 18:51
+
+    * workerctl.c
+
+    Use temp variables in some find_worker_by_* calls to prevent an unusable
+    unlock_class call.
+
+2005-08-14 18:51
+
+    * workeropts.c
+
+    *** empty log message ***
+
+
+=============================================================================
+
+VERSION 0.5.2
+
+2005-08-14 16:32
+
+    * constants.h input.c mainctl.c opts.c opts.h reaper.c utillog.c
+      workerctl.c workerinfo.c workerlib.c workerlib.h workeropts.c
+      workeropts.h workersync.c workersync.h
+
+    Fixed serious synchronization bug
+    =================================
+    - Reaper would lock stats and wait for exiting thread to join.
+    - Exiting thread that has something coming 'after' it, poke master and
+    wait.
+    - Master would try to get lock on stats.
+    - Reaper can't proceed since it's waiting on exiting thread.
+    - Exiting thread can't proceed since it's waiting for master.
+    - Master can't proceed since it's waiting for stats lock (held by reaper).
+    
+    Miscellaneous synchronization cleanups
+    ======================================
+    Defer stats lock in reaper to avoid deadlock.
+    Defer send_master_cmd in worker_unregister to avoid deadlock.
+    Added code to debug synchronization variables.  Requires '-S' option.
+    Added a 'start' lock as a work-around for pthread weirdness.
+    - Worker thread would be off and running before the pthread_t pointer in
+	phtread_create would have a value.
+    
+    Other small fixes/cleanups
+    ==========================
+    Added more debugging messages to disk option parsing.
+    Added find_worker_by_tid function.
+    Added CLS_ALL and CLS_NONE, to prevent overloading of CLS_LAST and
+    CLS_ERROR.
+    Renamed some master_ctl variables.
+
+
+=============================================================================
+
+VERSION 0.5.1
+
+2005-08-12 17:48
+
+    * README constants.h cpuworker.c cpuworker.h diskworker.c memworker.c
+      networker.c workerinfo.c workeropts.c workeropts.h
+
+    Added ability to specify all sizes and I/O rates using dd-style postfixes.
+    Redid code that handles page, block, and packet sizes to reflect this.
+    Cleaned up target_{disk,net}io handling for disk and net worker.
+    Expanded size of iorates and other integers to handle sizes >= 4GiB.
+
+
+=============================================================================
+
+VERSION 0.5.0
+
+2005-08-11 17:08
+
+    * input.c
+
+    Implemented 'helo' command.
+
+2005-08-11 17:08
+
+    * README
+
+    New README file with new usage.
+
+
+2005-08-11 17:07
+
+    * opts.c
+
+    Fixed out-of-order lines in usage.
+
+
+2005-08-11 16:12
+
+    * TODO constants.h cpuworker.c diskworker.c memworker.c networker.c
+      networker.h workeropts.c workeropts.h
+
+    Moved constants around within headers, added KILOBYTE constant.
+    Only print CPU stats if CPU worker did work.
+    Only print disk stats if disk worker did work.
+    Cleaned up diskworker code, added more comments.
+    Cleaned up memworker code, added more comments.
+    Commented and extended nio_opts struct.
+    
+    Ported a batch of {CPU,memory,disk} updates to the networker code.
+    - Keep track of total and missed deadlines.
+    - New worker_register and worker_unregister semantics.
+    - Keep track of read and write I/O separately.
+    - Redid logging to not use thread ID (done at lower level now).
+    - Moved to epoch-and-deadline-based I/O operations.
+    - Only print network stats if net worker did work.
+    - Cleaned up function calls and the number of parameters.
+    - Added do_dataio wrapper to {recv,send}_data
+    - Cleaned up error handling and reporting for the network.
+    - Added print_iostats function.
+
+
+2005-08-10 23:23
+
+    * utillog.h workersync.c
+
+    Gave synchronization operations their own debugging level.
+
+
+2005-08-10 23:20
+
+    * workerinfo.c
+
+    More detailed start and last modified times in info.
+
+
+2005-08-10 18:28
+
+    * Makefile TODO calibrate.c calibrate.h constants.h cpuworker.c
+      diskworker.c input.c input.h mainctl.c mainctl.h memworker.c netsstress.c
+      networker.c opts.c opts.h reaper.c reaper.h sstress.c utilio.c utilio.h
+      utillog.c workerctl.c workerctl.h workerinfo.c workerlib.c workeropts.c
+      workeropts.h workersync.c workersync.h
+
+    Input
+    =====
+    Input is now handled by an input thread.  This thread handles some commands
+    locally and sends others to the master thread for execution.
+    Input thread can handle timestamped and non-timestamped traces.
+    
+    General changes
+    ===============
+    Created a (threadID, lock, CV) struct and introduced it into a few places.
+    Removed the underscore from a few #define's.
+    Upped the number of MAX_{CPUS,MEMS,DIOS,NIOS} to 32.
+    Added a mod_time to the shared struct.
+    The input thread and the worker threads send commands to the master thread
+    using a lock, a CV, and a command buffer.
+    Split commands into those executed by the input thread (info, helo, etc)
+    and
+    those executed by the master thread (wctl, 'after' threads, etc).
+    Added a '-T' command-line option to control timestamp parsing.
+    Added a get_shared_opts function to simplify getting a pointer to a
+    worker's
+    shared option struct.
+    Added a timeout value to the utilio functions.
+    s_log command now prints all information (debug level, timestamp, message)
+    at
+    once, preventing any synchronization issues.
+    Correct implementation of the 'after' parameter.
+    Print size of data structures on startup.
+    validate_XXX_opts now validates the 'after' parameter.
+    More generic {lock,unlock,wait,signal}_* functions.
+
+
+2005-08-08 14:56
+
+    * workerlib.c workerlib.h
+
+    Find an 'after' label.
+
+
+2005-08-08 14:49
+
+    * reaper.c workerctl.c workerlib.c workerlib.h workeropts.c workeropts.h
+      workersync.c workersync.h
+
+    Added more flexibility in finding workers, both in the find_worker_by_*
+    functions and the label count.  Made struct names more generic.
+
+
+2005-08-08 13:36
+
+    * Makefile cpuworker.c diskworker.c mainctl.c memworker.c reaper.c
+      workerctl.c workerinfo.c workerlib.c workeropts.c workeropts.h
+      workersync.c workersync.h workerwait.c
+
+    Split workeropts into an option-related module and a
+    synchronization-related module.
+
+
+2005-08-08 12:41
+
+    * mainctl.c workerinfo.c workerlib.c workeropts.h workerwait.c
+
+    Removed statistics on number of workers holding up a 'wait' statement, and
+    added statistic on number of failed worker requests.
+
+
+2005-08-08 12:40
+
+    * workeropts.c
+
+    Added code to ensure label uniqueness within a class.
+
+
+2005-08-08 12:39
+
+    * TODO
+
+    Updated TODO list.
+
+
+2005-08-05 15:05
+
+    * Makefile mainctl.c workerlib.c workeropts.c workeropts.h workerwait.c
+      workerwait.h
+
+    Implemented the 'wait' command-line function.
+
+
+2005-08-05 13:08
+
+    * workeropts.c workeropts.h
+
+    Added struct members for waiting and 'after' options.
+
+
+2005-08-05 02:10
+
+    * netsstress.c sstress.c utilio.h workeropts.c workeropts.h
+
+    Made a few updates WRT the size of the various structs.
+
+
+2005-08-04 23:47
+
+    * mainctl.c workerctl.c workerctl.h workerlib.c workerlib.h
+
+    Modify and delete workers through references to the label, not the worker
+    ID.
+
+
+2005-08-04 18:32
+
+    * Makefile calibrate.c constants.h cpuworker.c diskworker.c mainctl.c
+      memworker.c networker.c reaper.c reaper.h sstress.c utillog.c workerctl.c
+      workerinfo.c workerlib.c workerlib.h workeropts.c workeropts.h
+
+    A really big batch of updates.
+    
+    Overall
+    =======
+    Broke workeropts into workeropts and workerinfo.
+    Added a reaper thread.
+    Moved randomNumbers.h to utilrand.h
+    Function register_worker now returns index within class array.
+    
+    Constants
+    =========
+    Queue size for reaper.
+    
+    Sstress Main
+    ============
+    Starts and stops reaper.
+    
+    Main Control
+    ============
+    Cleaned up comments to reflect new command function flexibility.
+    Implemented "info" command.
+    The "wctl del" command handles missing parameters correctly now.
+    Moved get_cmd and get_cls.
+    
+    Worker Info
+    ===========
+    Updated global-level statistics printout.
+    We now lock the class when iterating over the entire class.
+    Other minor tweaks to labels, positioning, etc.
+    
+    Worker Control
+    ==============
+    Removed a lot of useless includes.
+    Added proper class locking at this level of abstraction (was lower).
+    Now handles statistics locking correctly.
+    
+    Worker Library
+    ==============
+    More debugging messages available.
+    Removed startall_queued_workers.
+    BIG revamp of start_queued_worker to be much less complex.
+    Removed gate and count locking mechanism.
+    Cleaned up find_worker.
+    Big revamp of kill_worker to just tag the thread for the reaper, not
+    join().
+    Big revamp of worker_register to return class array index, keep statistics.
+    Revamp of worker_unregister to signal reaper for death, keep statistics.
+    Moved class locking to higher level of abstraction (worker control).
+    
+    Worker Options
+    ==============
+    Added sequential IDs for worker threads.
+    Added 'label' member to all worker structs.
+    Correctly initialize all elements of the option data structure.
+    Added lock/unlock/signal/wait reaper functions.
+    Added lock/unlock statistics functions.
+    Added lock/unlock class functions.
+    Added lock/unlock worker functions.
+    Keep statistics on parsed and pending workers.
+    Changed 'per_second' to 'iorate' in mem_opts struct.
+    Changed 'random_ratio' to 'stride' in mem_opts struct.
+    Added condition variable to shared worker struct.
+    Added struct to keep worker statistics (parsed, spawned, running, etc).
+    Added struct for workers and reaper to synchronize activities.
+    
+    CPU Worker
+    ==========
+    Adopted new worker_register function.
+    Now uses worker label instead of CPU%02d for messages.
+    Keep statistics for exiting threads.
+    Scaled "work" messages to CPU_WORK_SCALE units.
+    
+    Disk Worker
+    ===========
+    Adopted new worker_register function.
+    Now uses worker label instead of DIO%02d for messages.
+    Keep statistics for exiting threads.
+    Adopted new worker_unregister function.
+    
+    Memory Worker
+    =============
+    Changed 'per_second' to 'iorate' in mem_opts struct.
+    Changed 'random_ratio' to 'stride' in mem_opts struct.
+    Now uses worker label instead of MEM%02d for messages.
+    Removed ad-hoc start message.
+    Keep statistics for exiting threads.
+    Adopted new worker_register function.
+    More efficient check for expired time.
+    Includes number of missed deadlines now.
+    Adopted new worker_unregister function.
+    
+    Net Worker
+    ==========
+    No big changes.  This still needs work and debugging.
+    
+    Logging
+    =======
+    Changed date format.
+
+
+2005-08-04 17:48
+
+    * TODO
+
+    Updated TODO list.
+
+
+2005-08-04 14:51
+
+    * workerinfo.c workerinfo.h
+
+    Split workeropts into workeropts and workerinfo.
+
+2005-08-04 14:51
+
+    * utilrand.h
+
+    Renamed randomNumbers.h to utilrand.h.
+
+
+2005-08-03 16:48
+
+    * TODO
+
+    Updated TODO list.
+
+2005-08-03 16:48
+
+    * constants.h cpuworker.h
+
+    Moved CPU_WORK_SCALE to constants.h
+
+
+2005-08-02 14:47
+
+    * netsstress.c sstress.c
+
+    Since there won't be any queued workers before accepting commands, we can
+    get rid of the startall_queued_workers call.
+
+
+2005-08-01 16:06
+
+    * constants.h
+
+    *** empty log message ***
+
+
+2005-07-28 16:02
+
+    * constants.h cpuworker.c diskworker.c memworker.c networker.c workerlib.c
+      workeropts.c
+
+    Removed many memset(opt, 0, sizeof(opt))-type lines with clean_worker_opts.
+
+
+2005-07-28 15:40
+
+    * workeropts.c
+
+    Generic option scrubbing functions.
+
+
+2005-07-28 15:24
+
+    * cpuworker.c diskworker.c memworker.c networker.c workerctl.c workerlib.c
+      workerlib.h workeropts.c workeropts.h
+
+    Moved worker class and command definitions from workerlib to workeropts,
+    and make the parse, validate, and clean option API more generic.
+
+
+2005-07-28 15:03
+
+    * mainctl.c mainctl.h
+
+    Redid command structure to allow a more flexible and richer set of
+    commands.
+
+
+2005-07-28 13:51
+
+    * workerctl.c workerlib.c
+
+    windex -> widx.
+
+
+2005-07-27 18:07
+
+    * mainctl.c workerctl.c workerctl.h
+
+    User now modifies or deletes worker using references to worker ID.
+
+2005-07-27 18:07
+
+    * workerlib.c
+
+    Header file inclusion change.
+
+
+2005-07-27 17:47
+
+    * Makefile workerctl.c workerctl.h workerlib.c workerlib.h
+
+    Spun basic worker operations into low-level (workerlib) and high-level
+    (workerctl) modules.
+
+
+2005-07-27 17:46
+
+    * workeropts.c workeropts.h
+
+    Redid worker options to be strings instead of just letter (i.e., 'load'
+    instead of 'l').  Added a variety of thread management parameters (msource,
+    mdest, pending, etc).
+
+
+2005-07-27 13:46
+
+    * Makefile mainctl.c mainctl.h netsstress.c sstress.c workerctl.c
+      workerctl.h
+
+    Placed all worker-thread-related code in workerctl.  Created a new module
+    for high-level command parsing (mainctl).
+
+
+2005-07-26 17:20
+
+    * workeropts.h
+
+    Added locks to the sstress_opts struct.
+
+
+2005-07-26 17:07
+
+    * Makefile calibrate.c cpuworker.c diskworker.c memworker.c netsstress.c
+      networker.c sstress.c workerctl.c workerctl.h workeropts.c workeropts.h
+
+    Redid option structs so all shared options have their own struct.  Removed
+    worker.[ch] as they did nothing useful.
+
+
+2005-07-26 12:50
+
+    * TODO
+
+    Updated TODO list.
+
+
+=============================================================================
+
+VERSION 0.4.1
+
+2005-07-25 20:38
+
+    * TODO
+
+    Updated TODO file.
+
+
+2005-07-25 20:35
+
+    * cpuworker.c diskworker.c memworker.c workeropts.h
+
+    Moved global variables from local static arrays to the worker thread option
+    structures.
+
+
+2005-07-25 19:12
+
+    * README
+
+    Updated README.
+
+
+2005-07-25 19:11
+
+    * workerctl.c
+
+    calculate_timediff is in calibrate.  Removed hostname and time from command
+    printout (now in utillog).
+
+2005-07-25 19:11
+
+    * worker.c
+
+    Moved thread IDs to the utillog level.
+
+
+2005-07-25 19:10
+
+    * diskworker.c memworker.c networker.c
+
+    Redid logging to remove thread IDs (now included in utillog) and include
+    S_DLOOP level for low-level loop debugging.
+
+
+2005-07-25 19:09
+
+    * utillog.c
+
+    Removed log label and replaced it with the hostname and the thread ID.
+
+
+2005-07-25 19:08
+
+    * calibrate.c calibrate.h
+
+    Redid calibration to take less time and occur in a thread, just like a CPU
+    worker would do.
+
+
+2005-07-25 19:07
+
+    * workeropts.h
+
+    Made 'dirty' and 'exiting' volatile.
+
+
+2005-07-25 19:04
+
+    * utillog.h
+
+    Added S_DLOOP tag for debugging of tight loops, as opposed to very verbose
+    details.
+
+
+2005-07-25 19:03
+
+    * cpuworker.c cpuworker.h
+
+    Redid CPU worker to be like mem and disk worker in terms of trying to meet
+    deadlines.
+
+
+2005-07-25 18:57
+
+    * opts.c
+
+    Add help command-line option; set logging stream to stdout by default, and
+    default log level to S_NOTICE.
+
+
+2005-07-25 16:15
+
+    * netsstress.c sstress.c
+
+    Added copyright header to sstress and netsstress.
+
+
+2005-07-22 17:19
+
+    * Makefile
+
+    Added profiling options to the Makefile.
+
+
+2005-07-21 14:13
+
+    * opts.c
+
+    Changed options to allow direct setting of debug level.
+
+
+2005-07-21 13:53
+
+    * Makefile netsstress.c opts.c opts.h sstress.c workerctl.c workeropts.c
+      workeropts.h
+
+    Sput out command-line opts and worker thread opts modules into separate
+    files.
+
+
+2005-07-21 13:11
+
+    * Makefile cpuworker.c diskworker.c memworker.c netsstress.c networker.c
+      sstress.c worker.c workerctl.c workeropts.c workeropts.h
+
+    Added printf-like logging functions to get rid of debug_level if()
+    statements.
+
+
+2005-07-21 13:09
+
+    * utillog.c utillog.h
+
+    Added printf-like logging functions to get rid of debug_level if()
+    statements.
+
+
+2005-07-20 17:10
+
+    * Makefile cpuworker.c diskworker.c memworker.c netsstress.c sstress.c
+      workerctl.c workeropts.c workeropts.h
+
+    Removed the utilsleep function and renamed the utilsleep.[ch] files to
+    calibrate.[ch].
+
+
+2005-07-20 17:09
+
+    * calibrate.c calibrate.h
+
+    Removed the utilsleep function and renamed the utilsleep.[ch] files to
+    calibrate.[ch].
+
+
+2005-07-20 16:59
+
+    * Makefile cpuworker.h diskworker.c memworker.c netsstress.c networker.c
+      opts.c opts.h sstress.c worker.h workerctl.c workerctl.h workeropts.c
+      workeropts.h
+
+    Renamed opts.[ch] to workeropts.[ch] as part of a re-working of commands. 
+    Changed all files to reflect this change.
+
+
+2005-07-20 16:58
+
+    * memworker.h
+
+    Added constant for msec to memworker.
+
+2005-07-20 16:58
+
+    * cpuworker.c
+
+    cpuworker now uses select() instead of utilsleep to sleep.
+
+
+2005-07-20 16:56
+
+    * utilio.c
+
+    Remove COD references from utilio.
+
+
+2005-07-11 21:28
+
+    * cpuworker.c diskworker.c memworker.c networker.c opts.h
+
+    Added a start_time parameter to each struct, which is initialized by each
+    thread once it starts (or re-starts) successfully.
+
+
+=============================================================================
+
+VERSION 0.4.0
+
+2005-07-11 16:17
+
+    * netsstress.c
+
+    Fixed lack of trace capability in netsstress.
+
+
+2005-07-11 16:10
+
+    * netsstress.c opts.c opts.h sstress.c
+
+    Added a usage function.
+
+
+2005-07-11 15:53
+
+    * netsstress.c
+
+    Netsstress main() now handles new command-line options correctly.
+
+
+2005-07-11 15:52
+
+    * opts.c opts.h
+
+    Made log_file global so netsstress could access it.
+
+
+2005-07-11 15:39
+
+    * README
+
+    Updated README for new command-line and thread options.
+
+
+2005-07-11 09:46
+
+    * constants.h cpuworker.c diskworker.c memworker.c netsstress.c networker.c
+      opts.c opts.h sstress.c utilsleep.c utilsleep.h worker.c workerctl.c
+      workerctl.h
+
+    Changed log messages to write to stdout instead of stderr.	Also fixed
+    main() to handle benchmark runs properly.
+
+
+=============================================================================
+
+VERSION 0.3.9
+
+2005-07-08 11:58
+
+    * TODO constants.h cpuworker.c cpuworker.h diskworker.c diskworker.h
+      memworker.c memworker.h networker.c opts.c opts.h utilsleep.c utilsleep.h
+      workerctl.c
+
+    Minor changes to the CPU thread
+    - Cleaned up CPU count initialization
+    - Added a "maximum work" component
+      + This component is scaled to kilo-ops
+    
+    Completely re-vamped the diskworker thread
+    - Broke I/O into "epochs", and we target a number of I/Os per epoch
+      + At the end of an epoch we can sleep (if there's time) or proceed
+	 directly to the next epoch
+      + Caps the number of seeks per epoch so we don't get deadlocked and miss
+	 an exit deadline
+    - Keeps track of all I/O types individually
+    - Extensive validation of disk I/O parameters
+    - Randomly choose the type of I/O to perform, based on a ratio of reads,
+       writes, and seeks to mix in (specified by the user)
+    - Open and close the work file (and create and delete if necessary), based
+       on the parameters from the user
+      + User can now specify whether or not to create or overwrite work files
+    - Added a "maximum work" component
+      + This component is scaled to KiB of I/O (reads and writes)
+    - Eliminated sub-(1 / HZ) sleeps, reducing CPU use by this thread
+    - Keep track of total deadlines and the number we've missed
+    - Better statistics of the different kinds of I/O we perform
+    - Reduced "missed deadlines" detail
+    
+    Completely re-vamped the memworker thread
+    - Broke I/O into "epochs", and we target a number of I/Os per epoch
+      + At the end of an epoch we can sleep (if there's time) or proceed
+	 directly to the next epoch
+    - Keep track of the total memory I/O and the rate of I/O
+    - All memory amounts in KiB now instead of MiB (consistency with disk I/O)
+    - Added a "maximum work" component, in total KiB of I/O
+    
+    Updated option structs
+    - Added "maximum work" struct members
+    - Added more extensive comments for each member
+    - Removed some "magic numbers" and replaced with #define'd constants
+    
+    Updated option parsing/handling
+    - Modified option parsing to handle new options (i.e., max work)
+    - Removed some "magic numbers" and replaced with #define'd constants
+    - Added validate_XXXopts functions for cpu, mem, dio, and nio.
+    - Updated level of detail for printing options to stderr
+    
+    Updated worker control functions
+    - Updated thread comparison function to include new struct members
+
+
+2005-06-23 14:02
+
+    * memworker.c
+
+    Added extra error messages to memworker.
+
+
+2005-05-26 12:04
+
+    * sstress.c
+
+    Set line buffering for stderr.
+
+
+2005-05-26 12:03
+
+    * Makefile
+
+    Fixed various compile flags.
+
+
+=============================================================================
+
+VERSION 0.3.4
+
+2004-10-19 16:27
+
+    * netsstress.c sstress.c
+
+    Main programs can now create and load benchmark data files.
+
+
+2004-10-19 16:26
+
+    * utilsleep.c utilsleep.h
+
+    Added ability to do multiple calibration/benchmark runs and take the best
+    from each.
+
+2004-10-19 16:26
+
+    * opts.c opts.h
+
+    Option parsing now includes ability to create and load benchmark data
+    files.
+
+
+2004-10-19 14:11
+
+    * Makefile netsstress.c opts.c opts.h sstress.c
+
+    Removed sysdata from sstress.  We weren't using it at all.
+
+
+=============================================================================
+
+VERSION 0.3.3
+
+2004-08-19 12:38
+
+    * memworker.c
+
+    Clean up after a memworker thread.
+
+
+2004-08-19 12:32
+
+    * utilsleep.c
+
+    Return immediately if the sleep is less than our delay overhead.
+
+2004-08-19 12:32
+
+    * opts.c
+
+    Parse /all/ memory options instead of just the first four.
+
+
+=============================================================================
+
+VERSION 0.3.2
+
+2004-08-15 18:03
+
+    * memworker.c workerctl.c
+
+    Added a sequential:random access ratio variable to the memworker thread.
+
+
+2004-08-15 18:02
+
+    * opts.c opts.h
+
+    Added a sequential:random access ratio variable to the memworker thread.
+
+
+=============================================================================
+
+VERSION 0.3.1
+
+2004-08-10 20:39
+
+    * cpuworker.c networker.c
+
+    Correct conditions for timed-run exits.
+
+2004-08-10 20:39
+
+    * memworker.c
+
+    Change memworker delay from usec to nsec.  Correct conditions for timed-run
+    exits.
+
+
+2004-08-10 20:38
+
+    * opts.c opts.h
+
+    Change memworker delay from usec to nsec.
+
+
+=============================================================================
+
+VERSION 0.3.0
+
+2004-08-04 13:26
+
+    * cpuworker.c cpuworker.h diskworker.c diskworker.h memworker.c memworker.h
+      networker.c networker.h opts.c opts.h sysdata.c sysdata.h utilarr.c
+      utilarr.h utilio.c utilio.h utilnet.c utilnet.h utilsleep.c utilsleep.h
+      worker.c worker.h workerctl.c workerctl.h
+
+    Updated all copyright notices and dates.
+
+
+2004-08-04 13:14
+
+    * utilarr.h utilio.h utilnet.h
+
+    Stripped out COD references from headers.
+
+2004-08-04 13:14
+
+    * utilnet.c
+
+    Eliminated some snprintf-related compile warnings.
+
+
+2004-08-04 13:13
+
+    * networker.c
+
+    Eliminated some printf-related compile warnings.
+
+
+2004-08-04 13:12
+
+    * diskworker.c
+
+    Moved seek_time to avoid uninitialized use.  Redid buffer content
+    randomization.  Now uses utilsleep delays.
+
+
+2004-08-04 13:11
+
+    * cpuworker.c
+
+    Use new utilsleep function for CPU delays.
+
+2004-08-04 13:11
+
+    * diskworker.h
+
+    Moved [NU]S_SEC conversion factors from diskworker.h to utilsleep.h.
+
+
+2004-08-04 13:10
+
+    * Makefile
+
+    Added new sleep library and turned on optimizations by default.
+
+2004-08-04 13:10
+
+    * netsstress.c sstress.c utilsleep.c utilsleep.h worker.c worker.h
+
+    Created a new sleep library.  Moved calibration from worker to utilsleep
+    functions.
+
+
+=============================================================================
+
+VERSION 0.2.5
+
+2004-07-26 14:55
+
+    * diskworker.c
+
+    Change from round-robin I/O to random I/O.	Include speeds with and without
+    seeks.
+
+
+2004-07-26 14:47
+
+    * cpuworker.c
+
+    Remove slice_count from parameter sanity check since we calculate it later.
+
+2004-07-26 14:47
+
+    * diskworker.h
+
+    Add sec -> usec conversion factor.
+
+
+=============================================================================
+
+VERSION 0.2.4
+
+2004-07-22 13:50
+
+    * diskworker.c
+
+    Disk I/O is now write-only.  Replaced sopts->... references with a dio_opts
+    struct.  Added support for the 'nblks' option.
+
+2004-07-22 13:50
+
+    * TODO
+
+    Updated TODO list.
+
+
+2004-07-22 13:36
+
+    * opts.c
+
+    Added parameter for the number of blocks in the file we're writing.
+
+
+2004-07-22 13:35
+
+    * opts.h
+
+    Added parameter for the number of blocks in the file we're writing.
+
+
+=============================================================================
+
+VERSION 0.2.3
+
+2004-07-21 19:15
+
+    * netsstress.c sstress.c
+
+    Added PRNG calibration to program initialization.
+
+2004-07-21 19:15
+
+    * Makefile
+
+    Added optimization cflags lined (currently commented out).
+
+
+2004-07-21 19:14
+
+    * diskworker.c
+
+    Randomize the contents of the read/write buffer to eliminate any possible
+    optimizations.
+
+
+2004-07-21 19:13
+
+    * cpuworker.c cpuworker.h worker.c worker.h
+
+    Moved CPU calibration from cpuworker to worker and added a PRNG
+    calibration.
+
+
+2004-07-21 19:12
+
+    * networker.c
+
+    Moved variable initialization to silence warning.
+
+
+2004-07-21 18:13
+
+    * opts.c opts.h
+
+    Added ability to supress missed deadline messages.
+
+
+=============================================================================
+
+VERSION 0.2.2
+
+2004-07-20 19:30
+
+    * netsstress.c
+
+    Only fork into the background if we're told to do so on the command-line.
+
+2004-07-20 19:30
+
+    * diskworker.c
+
+    Change total bytes from unsigned long to unsigned long long.
+
+
+2004-07-20 19:28
+
+    * opts.c opts.h
+
+    Add a command-line option that lets up know whether we should fork into the
+    background.
+
+2004-07-20 19:28
+
+    * workerctl.c
+
+    Log and timestamp incoming commands.
+
+
+=============================================================================
+
+VERSION 0.2.1
+
+2004-07-09 18:58
+
+    * diskworker.c
+
+    Added explicit casts to 'unsigned long long' for portions of the timings
+    for the disk threads.
+
+
+2004-07-09 18:56
+
+    * opts.c
+
+    Add execution time specification support to cpu threads.
+
+2004-07-09 18:56
+
+    * diskworker.h
+
+    Added nanosecond-to-second conversion factor.
+
+
+=============================================================================
+
+VERSION 0.2.0
+
+2004-07-09 17:11
+
+    * cpuworker.c diskworker.c memworker.c networker.c
+
+    Added an execution time option for all thread types, allowing us to specify
+    how long before a thread dies.
+
+
+2004-07-09 17:10
+
+    * README opts.c opts.h
+
+    Added an execution time option for all thread types, allowing us to specify
+    how long before a thread dies.
+
+
+=============================================================================
+
+VERSION 0.1.8
+
+2004-07-08 19:35
+
+    * diskworker.c
+
+    Changed diskworker sleep mechanism from select() to nanosleep().
+
+
+=============================================================================
+
+VERSION 0.1.7
+
+2004-07-08 18:29
+
+    * diskworker.c diskworker.h
+
+    Added error handling to fflush call.  Replaced planahead code with
+    next-deadline-only calculation.
+
+
+2004-07-08 18:27
+
+    * netsstress.c sstress.c
+
+    Changed stderr from line buffered to fully buffered (mainly for the good of
+    the diskworker thread).
+
+
+=============================================================================
+
+VERSION 0.1.6
+
+2004-07-07 17:07
+
+    * diskworker.c diskworker.h
+
+    Plan disk I/O deadlines in advance so we don't see deadlines slip.
+
+
+2004-07-07 17:05
+
+    * netsstress.c sstress.c
+
+    Changed all I/O from unbuffered to line buffered.
+
+
+=============================================================================
+
+VERSION 0.1.5
+
+2004-07-07 17:01
+
+    * diskworker.c
+
+    Will now batch 'missed I/O' messages so the messages themselves don't make
+    us miss deadlines.
+
+
+=============================================================================
+
+VERSION 0.1.4
+
+2004-06-30 14:26
+
+    * INSTALL
+
+    Oops.  Incomplete INSTALL file.  Fixed.
+
+
+=============================================================================
+
+VERSION 0.1.3
+
+2004-06-30 14:25
+
+    * README
+
+    Minor updates to the README.
+
+
+2004-06-30 14:24
+
+    * INSTALL
+
+    Add quick INSTALL file.
+
+
+=============================================================================
+
+VERSION 0.1.2
+
+2004-06-30 13:19
+
+    * cpuworker.c diskworker.c networker.c
+
+    Added debug message for actual disk and network I/O rates.
+
+
+2004-06-30 13:18
+
+    * worker.c
+
+    Got rid of compile warning on printf type mismatch.
+
+
+=============================================================================
+
+VERSION 0.1.1
+
+2004-06-16 12:22
+
+    * TODO
+
+    Minor TODO update.
+
+2004-06-16 12:22
+
+    * memworker.c
+
+    Go through and touch all the pages to start, forcing the OS to allocate
+    them.
+
+
+2004-06-16 12:18
+
+    * cpuworker.c diskworker.c memworker.c networker.c worker.c
+
+    Added timing data to output.  This allows scripts to parse the logfiles for
+    specific timestamps.
+
+
+2004-06-16 12:17
+
+    * README
+
+    Added acknowledgement to HPL.
+
+
+=============================================================================
+
+VERSION 0.1.0
+
+2004-03-02 14:57
+
+    * opts.c
+
+    inet_ntoa -> inet_ntop.
+
+
+2004-03-02 14:47
+
+    * README
+
+    Added copyright info to README.
+
+
+2004-03-02 14:46
+
+    * README
+
+    Initial README file.
+
+
+2004-03-01 22:24
+
+    * cpuworker.c diskworker.c memworker.c netsstress.c networker.c sstress.c
+      worker.c workerctl.c
+
+    Added debug_level handling for all messages.
+
+
+2004-03-01 22:02
+
+    * networker.c
+
+    More fixes to logic flow for listening sockets.  Fixes UDP problems.
+
+2004-03-01 22:02
+
+    * opts.c opts.h
+
+    Added basic debug_level handling in getopt().
+
+
+2004-03-01 19:25
+
+    * Makefile TODO cpuworker.c cpuworker.h diskworker.c diskworker.h
+      memworker.c memworker.h netsstress.c networker.c networker.h opts.c
+      opts.h sstress.c sysdata.c sysdata.h utilarr.c utilarr.h utilio.c
+      utilio.h utilnet.c utilnet.h worker.c worker.h workerctl.c workerctl.h
+
+    Initial import of sstress tool.
+
+2004-03-01 19:25
+
+    * Makefile TODO cpuworker.c cpuworker.h diskworker.c diskworker.h
+      memworker.c memworker.h netsstress.c networker.c networker.h opts.c
+      opts.h sstress.c sysdata.c sysdata.h utilarr.c utilarr.h utilio.c
+      utilio.h utilnet.c utilnet.h worker.c worker.h workerctl.c workerctl.h
+
+    branches:  1.1.1;
+    Initial revision
+
+
+2004-03-01 18:40
+
+    * networker.c
+
+    Bind to listening port.  Cleaned up some non-blocking-related errors.
+
+
+2004-03-01 18:36
+
+    * sstress.c
+
+    Ignore all broken pipes.
+
+
+2004-03-01 17:47
+
+    * workerctl.c
+
+    Added cleaner handling of network thread startup and shutdown.
+
+
+2004-03-01 15:39
+
+    * COPYING
+
+    Added GPL to distribution.
+
+

@@ -1,0 +1,19 @@
+# Cheat sheet for some of the metrics
+
+Sar command line:
+"sar -d -P ALL 1 $2 > $DATA_DIR/$1.sar" # Missing CPU utilization?
+
+Pfmon command line:
+"pfmon -k -eLAST_LEVEL_CACHE_MISSES,INSTRUCTIONS_RETIRED --system-wide --print-interval=1000 -t $2 > $DATA_DIR/$1.pfmon"
+
+Wattsup:
+"/mantis/mantis/ac_pwr/wattsup -t ttyUSB0 watts"
+
+
+# older cheat sheet from grad school days
+# Use "$1" for trace id, $2 for amount of time, $SCRIPT_DIR and $DATA_DIR
+METRICS_LABELS="Starting CPU freq poll","Starting iostat","Starting performance counters","Starting CPU utilization poll"
+# METRICS_CMDS="$SCRIPT_DIR/cpufreq_poll.sh $DATA_DIR/$1 $2 &","iostat -xnt 1 $2 > $DATA_DIR/$1.iostat &","pfmon -k -u --events=bus_trans_mem:all_agents,instructions_retired,unhalted_core_cycles --system-wide --print-interval=1000 -t$2 --outfile=$DATA_DIR/$1 --with-header &","sar -P ALL 1 $2 > $DATA_DIR/$1.cpu_ut"
+METRICS_CMDS="$SCRIPT_DIR/cpufreq_poll.sh $DATA_DIR/$1 $2 &","iostat -xnt 1 $2 > $DATA_DIR/$1.iostat &","pfmon -k -u --events=rs_uops_dispatched,uops_retired:any,instructions_retired,unhalted_core_cycles --system-wide --print-interval=1000 -t$2 --outfile=$DATA_DIR/$1 --with-header &","sar -P ALL 1 $2 > $DATA_DIR/$1.cpu_ut"
+DAQ_PWR_PROG=/home/skrufi/brandelectronics/brandelect
+DAQ_PWR_KILL="killall brandelect"

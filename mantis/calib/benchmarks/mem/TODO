@@ -1,0 +1,7 @@
+0.7.1 'pause' command
+0.7.2 Better modular CPU function support.
+0.7.3 Worker migration
+0.7.4 Dynamic worker array allocation.
+0.8.0 Fix netgamut input handling.
+0.9.0 'load' commands from a file
+1.0.0 Add more comments to the code, esp. the disk and network code.

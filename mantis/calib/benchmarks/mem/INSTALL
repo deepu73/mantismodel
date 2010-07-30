@@ -1,0 +1,2 @@
+Type 'make' and that should create the gamut and netgamut binaries.  
+Copy them into whichever directory you want (probably /usr/local/bin).

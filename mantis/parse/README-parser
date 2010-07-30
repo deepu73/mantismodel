@@ -1,0 +1,13 @@
+Documentation for Mantis data parsing tools.
+-------------------------------------------
+
+Accumulate data from logfile and various utilization traces into a single CSV with one column for each metric and one row for each timestamp.
+
+Main program is data_parse.pl.  There are different modules for each type of trace; currently:
+* CPU_Ut: CPU utilization according to sar
+* CPU_Freq: CPU frequency according to a simple polling bash script
+* Disk: Disk stats from iostat
+* Power: AC power measurements from brandelect scripts
+* Perfctr: CPU performance counter data from perfmon
+If trace syntax changes, these modules will have to be modified.
+
