@@ -1,0 +1,14 @@
+Overview: These scripts automatically create a power model for a machine under test (MUT).  They assume the following architecture:
+  * MUT is connected to a power meter, which in turn connects to the wall outlet.
+  * Another machine (DAQ) interfaces with that power meter.  DAQ also initiates the calibration experiments on MUT.  DAQ must be able to ssh into MUT without a password.
+
+Running trace_gen on MUT will generate the following files for the specified component(s):
+  * Tracefiles for the calibration programs
+  * Script (to be copied to DAQ) to measure power and run the calibration suite
+
+trace_gen syntax:
+  ./trace_gen.pl -comp=<component(s)> -cfg=<config file>
+If "-comp" is not specified, trace_gen will generate traces for CPU, memory, and disk.  If "-cfg" is not specified, trace_gen will assume the configuration file is "config-calib" in the current directory.  If the configuration file does not exist, trace_gen will quit.
+
+Possible values of "-comp" are "cpu", "mem", and "disk".  Other values will be ignored. E.g.:
+  ./trace_gen.pl -comp=cpu -comp=mem -cfg=config

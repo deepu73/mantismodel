@@ -1,0 +1,369 @@
+------------------------------------------------------------------
+- gamut README by Justin Moore (justin@cs.duke.edu) (c)2004,2005 -
+------------------------------------------------------------------
+
+Introduction
+============
+
+Gamut (Generic Application eMUlaTor) is an application for selectively
+utilizing parts of a single machine or networked servers.  It is a
+multi-threaded application, accepting commands from stdin and starting,
+changing, or stopping worker threads.  Gamut currently supports four
+classes of workers: CPU, RAM, disk, and network. (WARNING: code for the
+network workers is in a state of flux at the moment and WILL NOT work.)
+
+By default, gamut will read commands from stdin and print log data to 
+stdout.  gamut need a "benchmark" file, which lists certain performance 
+parameters and delays for the machine type on which you are running; 
+without correct benchmark data, gamut will be unable to meet target 
+performance metrics.
+
+Command-Line
+============
+Usage: gamut [-l logfile] [-r restore_bmark_file] [-s save_bmark_file]
+            [-t tracefile] [-d debug_level] [-T <y|yes|n|no>]
+            [-S] [-b] [-q] [-h] [-V]
+
+-l logfile:             Log output to the given logfile (default: stdout).
+-r restore_bmark_file:  Restore benchmark data from the given file.
+-s save_bmark_file:     Save benchmark data to the given file.
+-t tracefile:           Execute a series of timestamped commands from a file.
+                        gamut will exit at the end of the file,
+                        and not read any commands from stdin.
+-d debug_level:         Set the logging detail to debug_level
+                        (0 <= debug_level <= 7, default: 3)
+-T <y|yes|n|no>:        Will input have timestamps?
+                        Tracefiles have timestamps by default.
+-b:                     Run the benchmark cycle 10 times.
+-S:                     Debug synchronization operations (adds overhead).
+-q:                     Quit after saving benchmark data to a file.
+-h:                     Print this help screen and exit.
+-V:                     Print version information and exit.
+
+Sample Usage:
+
+	gamut -b -q -s benchmark_data.txt
+
+Run the benchmark loop 10 times, save results to a file, and quit.
+
+	gamut -l gamut.log -r benchmark_data.txt -t gamut_trace.txt
+
+Redirect output to gamut.log, load benchmark data from a file, and 
+execute a tracefile.
+
+	cat trace.txt | gamut -l gamut.log -r benchmark_data.txt -T yes
+
+Redirect output to gamut.log, load benchmark data from a file, and read 
+a list of timestamped commands from stdin.
+
+Main Commands
+=============
+helo - The input thread prints 'helo' back, letting you know it's alive.
+
+info - Print a bunch of information about all the workers currently running.
+
+wait - Wait until all workers that will finish (i.e., have a maximum
+       runtime or a maximum amount of work to do) can finish, and then
+       accept commands again.
+
+wctl - Worker control.  Responsible for adding, modifying, and deleting
+       workers.
+
+link - Link two or more workers together for interleaved operations
+
+load - Load a list of commands from a file and execute them.
+       NOTE: This functionality is not implemented yet.
+
+opts - Print a list of options available for each worker.
+       NOTE: This functionality is not implemented yet.
+
+Worker Control (wctl)
+=====================
+There are five commands -- add, queue, start, mod, and del -- to control 
+worker execution, and four classes of workers -- cpu, mem, disk, and net.  
+When adding a worker, you can specify the attributes of the new worker. 
+When modifying or removing a worker, you must use the label of that 
+worker.  If you didn't specify a label, gamut will have created one for 
+your worker.
+
+For example,
+
+   wctl add cpu load=50,label=half-worker
+
+Means to add a worker that uses 50% of the CPU time.
+
+   wctl queue cpu load=75,etime=10,label=delayed
+
+Will add a worker to the queue, but will wait for an 'start' command.
+
+   wctl start cpu delayed
+
+Will start the worker specified in the above command.
+
+   wctl del cpu half-worker
+
+Will force the newly-created worker to exit.
+
+   wctl del cpu
+
+Will halt all CPU workers.
+
+Shared Worker Options
+---------------------
+There are four options that are shared among all workers.
+
+etime:  Total execution time, in whole seconds (optional).
+
+work:   Amount of work to do; you can use 'dd'-style multipliers:
+        k = 1000
+        K = 1024
+        m = 1000 * 1000
+        M = 1024 * 1024
+        g = 1000 * 1000 * 1000
+        G = 1024 * 1024 * 1024
+        t = 1000 * 1000 * 1000 * 1000
+        T = 1024 * 1024 * 1024 * 1024
+
+label:  Name of the worker; must be unique across all workers (optional).
+        NOTE: If you do not specify a label, gamut will create one for
+        your worker when it parses your wctl command.
+
+after:  Don't start this worker until after another worker you specify has
+        completed.  If the worker on which you are waiting does not exist,
+        the new worker will start immediately (this assumes the named
+        worker has already finished).
+
+CPU Worker Options
+------------------
+There are two additional parameters you can supply to a CPU worker:
+
+load:	Target load average in % of CPU, where 0 < l <= 100 (mandatory)
+
+burn:   The name of the function used to burn CPU; this is of little use
+        to non-programmers, but allows users to hack together their own
+        function to use the CPU.
+
+For example
+
+   wctl add cpu load=50,burn=burn64_1,work=10g
+
+will create a new CPU worker that attempts to use 50% of the host CPU, 
+uses the CPU utilization function labelled 'burn64_1', and will execute
+10 billion add operations (this will run about 22 seconds on my 3GHZ P4),
+after which the worker will exit.
+
+The command
+
+   wctl add cpu load=100,etime=20
+
+will create a CPU worker that attempts to use 100% of the host CPU for 20 
+seconds, using the default burn function, after which the worker will exit.
+
+NOTE: The workers use alternating periods of executing "add" instructions 
+        in a tight loop with periods of sleeping by using select().
+        The actual results will depend on the OS scheduler.
+
+Memory Worker Options
+---------------------
+A memory worker allocates a chunk of memory, touches all the pages to 
+force the OS to actually allocate them, and then goes through the memory 
+writing random values to the start of a page.
+
+There are four additional parameters you can supply to a memory worker:
+
+total:  Total memory to use (mandatory).
+
+wset:   Working set size; must be less than requested memory.
+        Defaults to the total memory requested if not provided (optional).
+
+iorate: Target I/O rate (mandatory).
+
+stride: Ratio of sequential to random accesses; stride length (optional).
+
+For example
+
+   wctl add mem total=65536,wset=32768,iorate=102400,stride=16,work=1048576
+
+will create a memory worker that uses 64 MiB of RAM, but only cycles 
+through 32 MiB.  It will attempt to do 100 MiB/sec of memory access, with 
+one random page accessed for every 16 sequentially accessed pages.  The 
+worker will exit after doing a GiB of I/O.
+
+The command
+
+   wctl add mem total=131072,iorate=409600,etime=10
+
+will create a memory worker that uses 128 MiB of RAM, cycling through all 
+the memory.  All accesses will be sequential, and it will attempt to reach 
+400 MiB/sec of I/O.  It will exit after 10 seconds
+
+NOTE: The PRNG does use some amount of CPU, so if the value (iorate / stride)
+        is too high, the memory worker will start to chew up CPU time.
+
+Disk Worker Options
+-------------------
+A disk worker performs I/O operations using a file.  A file consists of a 
+certain number of blocks, and attempts to reach a given I/O rate.
+
+There are six additional options you can provide to a disk worker.
+
+file:     File name; full path, or it will be relative to the
+          current working directory (mandatory).
+
+blksize:  Block size (mandatory).
+
+nblks:    Number of blocks in the file (mandatory)
+
+iorate:   I/O rate (mandatory)
+
+mode:     Creation/overwrite mode. (optional)
+            0 - Don't create or write to the file (default)
+            1 - Only create or write to the file if it doesn't exist
+            2 - Create and/or overwrite the file at will
+
+iomix:	Mix of read/write/seek commands (mandatory)
+
+For example
+
+   wctl add disk file=/tmp/foo.txt,blksize=8K,nblks=128,iorate=10M,create=2,iomix=1/10/2,etime=10
+
+will create a new worker that uses /tmp/foo.txt as its work file.  This 
+file will consist of 128 blocks of 8 KiB each (a 1 MiB file in total), and 
+will be created and overwritten at will.  The random I/O operation 
+selector will try to perform 1 read for every 10 writes for every 2 random 
+seeks.  The sum total of the read and write operations is a target of 10 
+MiB/sec.  The worker will exit after 10 seconds.
+
+The command
+
+   wctl del disk
+
+will cause all running disk workers to exit.
+
+Network Worker Options
+----------------------
+-=WARNING=-  This worker type does not work reliably for now. -=WARNING=-
+
+A net worker performs I/O operations over the network.
+
+There are six additional options you can provide to a net worker.
+
+addr:    Address of the remote end, in hostname or IP format.
+
+port:    Port number on which to connect or bind.
+
+proto:   Which protocol to use, TCP or UDP?
+
+mode:    Read (r) or write (w)?
+
+pktsize: Size of I/O packets
+
+iorate:  Rate of I/O
+
+-=WARNING=-  This worker type does not work reliably for now. -=WARNING=-
+
+Linking Workers
+===============
+New in 0.6.0, this allows you to queue up multiple workers and then run 
+them in a circular loop.  You can specify which workers and how much work 
+you want each worker to do during its link stage.  For example, you could 
+queue CPU worker 'C' and disk worker 'D', and specify that you want 'C' to 
+do 9 megaops for every megabyte of disk I/O done by 'D'.  You would start 
+the link, at which point they would bounce back and forth between 'C' and 
+'D' until one or both workers exit.
+
+At fine granularities -- i.e., with each worker doing little work during 
+its phase of the link -- this allows you to emulate workers with varying 
+degrees of I/O-bound and processor-bound behavior.  At big granularities,
+this allows you to run through a repetitive sequence of operations for an 
+indefinite period of time.
+
+There are three commands to control link behavior: queue, start, and del.  
+For example
+
+   link queue 3types cpu0=100m,mem0=1G,disk0=20M,cpu1=1g,mem1=8G,disk1=10M
+
+would specify that you want to create a new link of worker, named 
+'3types'; it consists of six workers, and assuming that you're not strange 
+and deceptive with your worker naming scheme, it will involve two each of 
+CPU, memory, and disk workers.  The amount of work done by each worker is 
+on the right-hand-side of the '=' sign, and that work will be done at the 
+rate specified by that worker's 'wctl queue' command.
+
+Workers cannot be part of more than one link.  There is a cap on the 
+number of links you can create and the number of workers in a link, but 
+you can adjust those in the constants file.  You can kill or otherwise 
+cause workers within a link to die off (i.e., setting a maximum amount of 
+work or execution time for that worker) and it will just re-link the 
+workers ahead of it and behind it to each other.
+
+NOTE: Workers cannot be linked if they are already running.  You must 
+      create the worker using 'wctl queue', NOT 'wctl add', and then queue 
+      the link.  You must start the workers with the 'link start' command, 
+      and NOT 'wctl start'.
+
+Here is a sample sequence to start a link, and some valid commands you can 
+execute while the link is running:
+
+--
+wctl queue mem total=128M,wset=64M,blksize=1K,iorate=500M,label=mem0
+wctl queue mem total=64M,blksize=128,iorate=200M,label=mem1
+wctl queue mem total=256M,blksize=256,iorate=1G,label=mem2
+wctl queue cpu load=10,label=cpu0
+wctl queue cpu load=33,label=cpu1
+wctl queue cpu load=100,label=cpu2
+link queue hybrid mem0=1G,cpu0=140m,mem1=400M,cpu1=400m,mem2=3G,cpu2=3g
+link start hybrid
+info
+wctl del cpu
+link del hybrid
+quit
+--
+
+Here we queue up six workers, link them together, and start them.  We get 
+some information about the workers, then kill off only the CPU workers.  
+At this point, only the three memory workers will be running.  We can kill 
+off the rest of those workers by using a 'link del' command.
+
+Trace Files
+===========
+Gamut allows you to read from a file containing timestamped commands, 
+executing those workers in order.  The file looks more or less like you 
+would expect it to.  Here is a sample file:
+
+--
+0.0 wctl add cpu load=50,etime=20
+2.5 wctl add cpu load=25,etime=10
+10.0 wctl add disk file=/tmp/foobar.txt,blksize=8,nblks=32,create=2,iomix=1/10/2,iorate=10240,etime=10
+12.0 info
+16.0 wctl del disk
+19.75 wait
+19.75 quit
+--
+
+Other Notes
+===========
+The file constants.h contains the maximum number of CPU, memory, disk, and 
+network workers that can be executing at any given time.  Feel free to 
+adjust these as necessary.  You might want to change these values and 
+re-compile.  If you fail to adjust this and try to create more than the 
+maximum number of any type of worker, you'll just get a generic "failed to 
+create worker"-type message.
+
+I recommend strongly that you perform a benchmark run first while your 
+machine is idle, and then use that benchmark data for every subsequent 
+gamut run.  This will create consistency.  Also, a benchmark file SHOULD 
+be usable by every machine that is identical to the one on which you 
+benchmarked.  DO NOT use a benchmark file on a different type of computer, 
+though; it will give you very incorrect results.
+
+I recommend using c=2 and using an I/O mix that includes reads and writes 
+for all disk workers at the moment.  Other modes are untested (although 
+that will change soon).
+
+Notes
+=====
+Gamut was written by Justin Moore.  I would like to thank HP Labs for
+their help in furthering the testing and development of the original
+release of gamut.  Additional thanks to Dimitris Economou for his
+help with testing and debugging, along with suggesting new features.

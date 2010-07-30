@@ -1,0 +1,58 @@
+MANTIS TODO LIST
+
+Taylor:
+* Fix "benchmatks" typo
+
+Suzanne and Taylor:
+* Test and run calibration; collect data
+
+Suzanne:
+* Test calib_gen.sh for other problems.
+* Modify setup to stop when something goes wrong there.
+* Parse calibration data and send to .csv
+* Daemon for applying model (needs to be very customizable)
+* Automate model generation
+* README file/documentation
+* Copyright/GPL stuff
+
+=======================================================================
+DONE:
+
+* Fix DAQ_PWR_KILL typo
+* Use $MANTIS_HOME environment variable
+* Distinction between CALIB_[component]_PROG and ..._INSTALL
+* Fix CPU frequency settings to go up to N cpus, not just 2
+* Fix CPU frequency settings to run alternate interface if cpufreq-set isn't there
+* calib-cpu overtime -- metrics finished too early
+* fp utilization too high
+* Don't take benchmark program names directly from config file
+* Path to matmult2 in calib-cpu
+* "wait" at end of calib-cpu
+* Figure out why there's an & after iostat but not sar (is it the command lines I'm giving it?)
+* Alias gamut to calib-mem and calib-disk in install
+* Figure out why the metrics are ending before the benchmark.
+* Keep the different calib scripts from fighting over the same logfiles
+* Test wattsup to see if it flushes its output more regularly now
+* Modify benchmarks/mem/install.sh to not bother with the gamut benchmark data if it's already there
+* Have setup.sh tell them to run calibrate.sh, not daq_benchmark.sh
+* Install sysstat (plug into internet and type "sudo apt-get install sysstat")
+* Test script for WattsUp meter (wattsup.sh in ac_pwr directory)
+* Test the three scripts called by setup.sh
+* Add DAQ_PWR_PROG and DAQ_PWR_KILL back to wizard.  The questions to ask are:
+* Include this line in description of metric commands:
+  "You may use "$1" for trace id, $2 for number of seconds, $SCRIPT_DIR for script directory and $DATA_DIR for data directory"
+* Put together script to actually run calibration phase (daq_benchmark.sh, duh!)
+* Write script for WattsUp meter.
+* Try out Linux WattsUp meter program
+* Add benchmark timings to calib_gen (currently timings are uninitialized)
+* Yell and scream if timing info isn't found.
+* Modify trace_gen to write a second file, $TRACE_ID-component-timing, to the input directory.
+* Modify CPU calibration benchmark to allow the input file to specify the timeslice for each multiplication.
+* Put necessary files in benchmarks/disk
+* Better error checking for scripts that compile calibration benchmarks.
+* Modify ParseCfgFile.pm and tracegen.pl once configuration file format changes.
+* Better error checking in ParseCfgFile and trace generation...what if DISK_WORKFILES are empty?
+* Fix cpu_scaling_avail in calib-config-wizard.pl to print 'n' when CPU scaling is not available and to not print CPU_FREQS_AVAIL at all.
+* Modify calib-config-wizard.pl to create new config file entries for whether or not they want to exercise memory/disk/cpu.
+* Modify calib-config-wizard.pl to use filenames rather than directory locations for CPU, memory, and disk benchmark programs (just append "calib-cpu", "calib-mem", etc. to current name, and use -e instead of -d to check existence)
+* Create script to compile calibration benchmarks (right now just CPU)
