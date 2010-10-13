@@ -41,6 +41,18 @@ sub RunProgs {
 if ($ENV{'MANTIS_HOME'} eq "") { die "Environment variable MANTIS_HOME is not set.\n"; }
 print "Your variable for \$MANTIS_HOME appears to be " . `echo \$MANTIS_HOME`;
 
+#Username for Machine Under Test
+$mut_usr = (`whoami`); #default
+chomp($mut_usr);
+print "What username will run the tests on this machine? (return results in default, currently set to $mut_usr):\n";
+$mut_usr = <STDIN>;
+chomp($mut_usr);
+if ($mut_usr eq "") { #if no user input restore default
+    $mut_usr = (`whoami`);
+    chomp($mut_usr);
+}
+print "You have selected $mut_usr as the machine under test username\n";
+
 # Directory Checks
 $tracefile_dir = &CheckDir("inputs", CHECK_FOR_DIRECTORY);
 $script_dir    = &CheckDir("scripts", CHECK_FOR_DIRECTORY);
@@ -56,10 +68,22 @@ $trace_id = &GetInputParam("Please pick a unique ID for the input traces and out
 print "Is this machine reading its own power measurements? (y/n)\n";
 $run_local = <STDIN>;
 chop($run_local);
-if ($run_local eq 'n') {
-	$daq_data_dir = &GetInputParam("Which directory on the DAQ machine will store the power measurement data?");
-}
+$daq_usr = $mut_usr;
 
+if ($run_local eq 'n') {
+    #collect DAQ username
+    $daq_usr = $mut_usr; #default
+    #chomp($daq_usr);
+    print "What username will be used on the DAQ? (return results in default, currently set to $daq_usr):\n";
+    $daq_usr = <STDIN>;
+    chomp($daq_usr);
+    if ($daq_usr eq "") { #if no user input restore default
+        $daq_usr = $mut_usr;
+    }
+    print "You have selected $daq_usr as the DAQ username\n";
+    
+    $daq_data_dir = &GetInputParam("Which directory on the DAQ machine will store the power measurement data?");
+}
 
 # CPU Calibration Phase
 $run_calib_cpu = &RunProgs("cpu");
@@ -137,7 +161,8 @@ print OUT "# Calibration phase configuration file\n\n# Paths\n";
 print OUT "TRACEFILE_DIR=$tracefile_dir\nSCRIPT_DIR=$script_dir\nDATA_DIR=$data_dir\n";
 print OUT "DAQ_DATA_DIR=$daq_data_dir\n\n";
 print OUT "RUN_LOCAL=$run_local\n\n";
-print OUT "MUT_USER=root\n";
+print OUT "MUT_USERNAME= $mut_usr \n";
+#print OUT "MUT_USER=root\n";
 print OUT "MUT_MACHINE=" . hostfqdn() . "\n\n";
 print OUT "TRACE_ID=$trace_id\n\n";
 print OUT "RUN_CALIB_CPU=$run_calib_cpu\nRUN_CALIB_MEM=$run_calib_mem\nRUN_CALIB_DISK=$run_calib_disk\n\n";
