@@ -104,17 +104,18 @@ sub GenCalibrationScript {
   print SCRIPTFILE "SCRIPT_DIR=" . $config{"SCRIPT_DIR"} . "\n";
   print SCRIPTFILE "TRACEFILE_DIR=" . $config{"TRACEFILE_DIR"} . "\n";
   print SCRIPTFILE "TRACE_ID=" . $config{"TRACE_ID"} . "\n";
+  print SCRIPTFILE "SSH_LINE=" . $config{"MUT_USERNAME"} . "@" . $config{"MUT_MACHINE"} . "\n\n";
 
 # Run CPU calibration -- 1...N CPUs (currently only 2??)
   my $i; 
   my $cpu_scale_avail = ($config{"CPU_SCALING_AVAIL"} eq 'y') ;
   if ($cpu_scale_avail) {
     for ($i=0; $i < $config{"CALIB_NUM_CPUS"}; $i++) {
-       print SCRIPTFILE "cpufreq-selector -c $i -g userspace\n";
+       print SCRIPTFILE "ssh \$SSH_LINE \"cpufreq-selector -c $i -g userspace\"\n";
     }
     print SCRIPTFILE "for i in " . $config{"CPU_FREQS_AVAIL"} . "\ndo\n";
     for ($i=0; $i < $config{"CALIB_NUM_CPUS"}; $i++) {
-      print SCRIPTFILE "  cpufreq-selector -c $i -f \$i\n";
+      print SCRIPTFILE "  ssh \$SSH_LINE \"cpufreq-selector -c $i -f \$i\"\n";
     }
   }
   else {
@@ -176,7 +177,7 @@ sub GenDAQScript {
   print SCRIPTFILE "#!/bin/sh\n\n";
   print SCRIPTFILE "DAQ_DATA_DIR=" . $config{"DAQ_DATA_DIR"} . "\n";
   if ($config{"RUN_LOCAL"} eq 'n') {
-	  print SCRIPTFILE "SSH_LINE=" . $config{"MUT_USER"} . "@" . $config{"MUT_MACHINE"} . "\n";
+	  print SCRIPTFILE "SSH_LINE=" . $config{"MUT_USERNAME"} . "@" . $config{"MUT_MACHINE"} . "\n";
   }	
 	
   print SCRIPTFILE "\n# \$1 = name of records, \$2 = function, \$3 = instrumentation time\n";
