@@ -114,7 +114,7 @@ sub GenCalibrationScript {
     }
     print SCRIPTFILE "for i in " . $config{"CPU_FREQS_AVAIL"} . "\ndo\n";
     for ($i=0; $i < $config{"CALIB_NUM_CPUS"}; $i++) {
-      print SCRIPTFILE "cpufreq-selector -c $i -g userspace\n";
+      print SCRIPTFILE "  cpufreq-selector -c $i -f \$i\n";
     }
   }
   else {
