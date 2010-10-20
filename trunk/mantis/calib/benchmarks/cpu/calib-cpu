@@ -1,5 +1,6 @@
 # $1 = number of processors
 # $2 = input file (parameters for matrix multiplications)
+source ~/.profile
 for i in $(seq $1)
 do
   $MANTIS_HOME/calib/benchmarks/cpu/matmult2 -t $2 &
