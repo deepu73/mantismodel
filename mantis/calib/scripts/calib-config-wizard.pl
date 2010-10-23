@@ -71,17 +71,17 @@ chop($run_local);
 $daq_usr = $mut_usr;
 
 if ($run_local eq 'n') {
-    #collect DAQ username
+    #collect DAQ username 
     $daq_usr = $mut_usr; #default
     #chomp($daq_usr);
     print "What username will be used on the DAQ? (return results in default, currently set to $daq_usr):\n";
     $daq_usr = <STDIN>;
     chomp($daq_usr);
     if ($daq_usr eq "") { #if no user input restore default
-        $daq_usr = $mut_usr;
-    }
+	$daq_usr = $mut_usr;
+	    }
     print "You have selected $daq_usr as the DAQ username\n";
-    
+      
     $daq_data_dir = &GetInputParam("Which directory on the DAQ machine will store the power measurement data?");
 }
 
@@ -144,7 +144,7 @@ if ($cpu_scaling_avail eq 'y') {
 print "Metrics to collect:\n";
 print 'You may use $1 for trace id, $2 for number of seconds, $SCRIPT_DIR for script directory and $DATA_DIR for data directory';
 $metric_label_num = &GetInputParam("\nHow many metrics will you collect?");
-@metric_label, @metric_cmds;
+my (@metric_label, @metric_cmds);
 for ($metric_counter = 1; $metric_counter <= $metric_label_num; $metric_counter++) {
 	$metric_label[$metric_counter] = &GetInputParam("What label will you give metric \#$metric_counter?");
 	if ($metric_counter < $metric_label_num) { $metric_label[$metric_counter] .= "," };
@@ -161,7 +161,8 @@ print OUT "# Calibration phase configuration file\n\n# Paths\n";
 print OUT "TRACEFILE_DIR=$tracefile_dir\nSCRIPT_DIR=$script_dir\nDATA_DIR=$data_dir\n";
 print OUT "DAQ_DATA_DIR=$daq_data_dir\n\n";
 print OUT "RUN_LOCAL=$run_local\n\n";
-print OUT "MUT_USERNAME= $mut_usr \n";
+
+print OUT "MUT_USERNAME=$mut_usr\n"; #updated to reflect mut_usr variable
 #print OUT "MUT_USER=root\n";
 print OUT "MUT_MACHINE=" . hostfqdn() . "\n\n";
 print OUT "TRACE_ID=$trace_id\n\n";
@@ -175,4 +176,3 @@ print OUT "DAQ_PWR_PROG=$daq_pwr_prog\nDAQ_PWR_KILL=$daq_pwr_kill";
 close (OUT);
 
 # ---------End of Main Program---------
-
