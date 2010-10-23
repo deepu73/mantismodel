@@ -137,7 +137,13 @@ sub GenCalibrationScript {
   		for ($j=0; $j<$config{"CALIB_NUM_CPUS"}; $j++) {
     			print SCRIPTFILE "  \n# " . ($j+1) . " CPU(s)\n";
     			print SCRIPTFILE "\n  echo \"Calibration: " . ($j+1) . " CPU(s) (" . $cpu_trace_sec*($j+1) . " sec)\"\n";
-    			print SCRIPTFILE "  ./daq_benchmark.sh \$TRACE_ID-\$i-" . ($j+1) . "cpu \"" . $config{"CALIB_CPU_PROG"} . " " . ($j+1) . ' $TRACEFILE_DIR/$TRACE_ID-cpu" '. $cpu_trace_sec*($j+1) . "\n";
+    			print SCRIPTFILE "  ./daq_benchmark.sh \$TRACE_ID-\$i-" . ($j+1) . 
+					 "cpu \"" . $config{"CALIB_CPU_PROG"} . " " . ($j+1) . 
+					' $TRACEFILE_DIR/$TRACE_ID-cpu ' . 
+					 "\&>" .  ' $DATA_DIR/$TRACE_ID' .
+					 "-\$i-" .
+					 ($j+1) . ".log\" " . $cpu_trace_sec*($j+1) . 
+					"\n";
     
     			print SCRIPTFILE "  echo \"Calibration: " . ($j+1) . " CPU(s) test complete\"\n";
   		}
@@ -220,7 +226,8 @@ sub GenDAQScript {
   print SCRIPTFILE "sleep 10s\n";
 
   print SCRIPTFILE "\necho \"\`date\` [DAQ] -- End power measurements\"\n";
-  print SCRIPTFILE (shellwords($config{"DAQ_PWR_KILL"}))[0] . "\n";
+  print SCRIPTFILE $config{"DAQ_PWR_KILL"} . "\n";
+  #print SCRIPTFILE (shellwords($config{"DAQ_PWR_KILL"}))[0] . "\n";
   print SCRIPTFILE "wait\n";
 	
 	if ($config{"RUN_LOCAL"} eq 'n') {
