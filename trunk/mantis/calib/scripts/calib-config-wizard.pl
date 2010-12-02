@@ -73,13 +73,12 @@ $daq_usr = $mut_usr;
 if ($run_local eq 'n') {
     #collect DAQ username 
     $daq_usr = $mut_usr; #default
-    #chomp($daq_usr);
     print "What username will be used on the DAQ? (return results in default, currently set to $daq_usr):\n";
     $daq_usr = <STDIN>;
     chomp($daq_usr);
     if ($daq_usr eq "") { #if no user input restore default
 	$daq_usr = $mut_usr;
-	    }
+    }
     print "You have selected $daq_usr as the DAQ username\n";
       
     $daq_data_dir = &GetInputParam("Which directory on the DAQ machine will store the power measurement data?");
@@ -124,14 +123,41 @@ if ($run_calib_mem eq 'y') {
 		print "Warning: it may not be possible to allocate this amount of memory.\n"; } }
 
 # Disk Calibration Phase
+#............................................................................resume here
 $run_calib_disk = &RunProgs("disk");
 if ($run_calib_disk eq 'y') {
-	$calib_disk_prog = &CheckDir("disk", CHECK_FOR_PROGRAM);
-	$calib_disk_install = &CheckDir("disk", CHECK_FOR_INSTALL_SCRIPT);
-	$calib_disk_workfiles = $tracefile_dir;
-#	$calib_disk_workfiles = &GetInputParam("Location of working files for disk experiments (use full path)?"); 
-#	while (-d $calib_disk_workfiles == 0) { $calib_disk_workfiles = &GetInputParam("Invalid location.  Please try again."); }
+    $calib_disk_prog = &CheckDir("disk", CHECK_FOR_PROGRAM);
+    $calib_disk_install = &CheckDir("disk", CHECK_FOR_INSTALL_SCRIPT);   
+    $calib_disk_workfiles = $tracefile_dir; #default
+
+   my  $temp = &GetInputParam("Enter disk directory location [return results in default]");    
+#if no user input restore default
+    if ($temp eq "") {
+	my $commandstringTemp = "touch " . $calib_disk_workfiles . "/foo.txt"; #touch default
+	$fileValidFlag = system($commandstringTemp) #did workfilename work? Check for error based on the result
+    }
+#not enter therefore don't use default
+    elsif ($temp ne "") { 
+	my $commandstringTemp = "touch " . $temp . "/foo.txt" ; #touch user input
+	$fileValidFlag = system($commandstringTemp) #did workfilename work? Check for error based on the result
+    }
+#keep prompting whether the default location OR the user-provided location failed
+# Use the result of the prev. touch operation
+    while($fileValidFlag != 0 ){ 
+	$temp = &GetInputParam("Invalid location. Please try again. \n"); 
+	my $commandstringTemp = "touch " . $temp . "/foo.txt"; #touch default
+	$fileValidFlag = system($commandstringTemp) # variable for did workfilename work? 
+    }
+    
+    if ($temp ne "") { #if not default & userinput
+	$calib_disk_workfiles = $temp; #set c_d_w as temp now that it's verified
+    }
+
+    $calib_disk_workfiles = $calib_disk_workfiles . "/foo.txt";    
+    print "You have selected for location of the working files for disk experiments as: $calib_disk_workfiles \n";    
 }
+
+
 
 # CPU Scaling Phase
 if (-e "/sys/devices/system/cpu/cpu0/cpufreq") {
@@ -176,3 +202,5 @@ print OUT "DAQ_PWR_PROG=$daq_pwr_prog\nDAQ_PWR_KILL=$daq_pwr_kill";
 close (OUT);
 
 # ---------End of Main Program---------
+
+#  LocalWords:  workfiles
