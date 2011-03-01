@@ -111,6 +111,7 @@ sub GenCalibrationScript {
   my $cpu_scale_avail = ($config{"CPU_SCALING_AVAIL"} eq 'y') ;
   if ($cpu_scale_avail) {
     print SCRIPTFILE "echo \"Setting CPU frequency on machine under test\"\n";
+
     for ($i=0; $i < $config{"CALIB_NUM_CPUS"}; $i++) {
        print SCRIPTFILE "ssh \$SSH_LINE \"cpufreq-selector -c $i -g userspace\"\n";
     }
@@ -170,6 +171,12 @@ sub GenCalibrationScript {
   if ($cpu_scale_avail) {
     print SCRIPTFILE "done\n";
   }
+#return freq governor from userspace to ondemand
+  my $i; 
+  for ($i=0; $i < $config{"CALIB_NUM_CPUS"}; $i++) {
+      print SCRIPTFILE "ssh \$SSH_LINE \"cpufreq-selector -c $i -g ondemand\"\n";
+  }
+  print SCRIPTFILE "# Frequency governor set back to ondemand.";
 
   close(SCRIPTFILE);
   my($mode) = 0754; chmod $mode, $scriptfile;
@@ -239,7 +246,9 @@ sub GenDAQScript {
   print SCRIPTFILE "sleep 30s\n";
 
 
+
   close(SCRIPTFILE);
   my($mode) = 0754; chmod $mode, $scriptfile;
 }
 # --- end sub GenDAQScript
+

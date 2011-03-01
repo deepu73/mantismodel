@@ -41,6 +41,21 @@ sub RunProgs {
 if ($ENV{'MANTIS_HOME'} eq "") { die "Environment variable MANTIS_HOME is not set.\n"; }
 print "Your variable for \$MANTIS_HOME appears to be " . `echo \$MANTIS_HOME`;
 
+my $continue = 'x';
+
+print "Run configuration wizard? (y/n)\n";
+while ($continue ne 'y' & $continue ne 'n') {
+  $continue = <STDIN>;
+  chop($continue);
+
+  if ($continue eq 'n') {
+     exit 0;
+  }
+  if ($continue ne 'y') {
+     print "Input not valid.  Please enter y or n.\n";
+  }
+}
+
 #Username for Machine Under Test
 $mut_usr = (`whoami`); #default
 chomp($mut_usr);
